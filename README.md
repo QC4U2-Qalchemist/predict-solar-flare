@@ -8,7 +8,7 @@
 
 ## line_of_sight_magnetgram 画像可視化プログラム
 
-![スクリーンショット](.\visualization.png)
+![スクリーンショット](visualization.png)
 
 ### 事前準備
 
