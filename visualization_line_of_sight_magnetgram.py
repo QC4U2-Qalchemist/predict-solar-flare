@@ -27,16 +27,17 @@ while i < data_mag.shape[2]:
         next_flare_index = min(idx for idx in flare_indices if idx - 10 <= i <= idx)
         countdown = next_flare_index - i
         if countdown >= 0:  # マイナスになる場合は表示しない
-            cv2.putText(frame, f'Countdown: {countdown}', (0, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(frame, f'Countdown: {countdown}', (1, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(frame, f'frame: {i}', (300, 500), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
     cv2.imshow('Frame', frame)
     #print('label[i]',label[i])
     # キーボード入力に応じた制御
-    key = cv2.waitKey(100)  # おおよそ30fpsの速度で再生
+    key = cv2.waitKey(1000)  # おおよそ30fpsの速度で再生
     if key == ord(' '):  # スペースキーで一時停止・再生
         pause = not pause
     while pause:
-        key = cv2.waitKey(100)
+        key = cv2.waitKey(300)
         if key == ord(' '):
             pause = False
         elif key == ord('g'):  # 'g' キーで10コマ早送り
