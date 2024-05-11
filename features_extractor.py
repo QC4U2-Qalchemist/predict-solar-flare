@@ -14,6 +14,8 @@ class FeaturesExtractor:
         self.features['complexities in orignal frame'] = []
         self.features['complexities in strength Gauss'] = []
         self.features['num of active regions'] = []
+        self.features['AR complexity avg.'] = []
+        self.features['AR complexity total'] = []
 
         self.pause = False
 
@@ -64,13 +66,28 @@ class FeaturesExtractor:
         # 円周部分のノイズをマスクする
         masked_frame = self.mask_outside_circle(high_strength_gauss)
 
+        # オリジナル ROS Magnetogramの複雑度
         self.features['complexities in orignal frame'].append(self.get_complexity(image))
 
+        # ROS Magnetogramの磁場強度の高い領域の複雑度
         self.features['complexities in strength Gauss'].append(self.get_complexity(masked_frame))
 
+        # Active reginsの抽出
         active_regions = self.get_active_regions(image)
 
+        # Active regins数
         self.features['num of active regions'].append(len(active_regions))
+    
+
+        ar_complexity_total = 0
+        for active_region in active_regions:
+            # ARの複雑度
+            ar_complexity_total += self.get_complexity(active_region)
+
+        # AR複雑度の平均値
+        ar_complexity = ar_complexity_total / len(active_regions)
+        self.features['AR complexity avg.'].append(ar_complexity)
+        self.features['AR complexity total'].append(ar_complexity_total)
 
 
     def find_min_max_coordinates(self, image):
