@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 
 
 class FeaturesExtractor:
-    def __init__(self, gauss_thresh=140, is_show_imgs=False):
+    def __init__(self, gauss_thresh=140, is_show_imgs=False, is_save_circumferential_denoising_npy=True):
         self.is_show_images = is_show_imgs
+        self.is_save_circumferential_denoising_npy = is_save_circumferential_denoising_npy
         self.gauss_thresh = gauss_thresh
         self.frames = []
         self.features = {}
@@ -18,6 +19,7 @@ class FeaturesExtractor:
         self.features['AR complexity total'] = []
 
         self.pause = False
+        self.circumferential_denoising = []
 
         #self.complexities = []
 
@@ -89,6 +91,11 @@ class FeaturesExtractor:
         self.features['AR complexity avg.'].append(ar_complexity)
         self.features['AR complexity total'].append(ar_complexity_total)
 
+        denoised = self.get_circumferential_denoising(image)
+        self.circumferential_denoising.append(denoised)
+        #cv2.imshow('denoised',denoised)
+        #cv2.imshow('image',image)
+        #cv2.waitKey(1)
 
     def find_min_max_coordinates(self, image):
         # 0でないピクセルの座標を取得
@@ -255,6 +262,15 @@ class FeaturesExtractor:
             self.key_handler(1)  # You might want to adjust this depending on the context
 
         return active_regions
+
+    def save_circumferential_denoising(self, out_filepath):
+        np.save(out_filepath,np.array(self.circumferential_denoising).transpose(1, 2, 0))
+        return 
+
+    def get_circumferential_denoising(self, image, rect_size=(20,20)):
+        denoised = self.mask_outside_circle(image[:, ::-1]).copy()
+        return denoised
+
 
     def key_handler(self, wait_in_ms):
 

@@ -11,7 +11,7 @@ import cv2
 from tqdm import tqdm
 
 
-def train(mag, features, label):
+def train(mag, features, label, epoch=10):
     # Train and Validation
     n_train = int(len(label) * 0.9)
     n_test = len(label) - n_train
@@ -43,7 +43,7 @@ def train(mag, features, label):
 
     # HyperParameters
     batch_size = 16
-    epochs = 10
+    epochs = epoch
 
     # CNN Model
     model = Sequential()

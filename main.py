@@ -75,7 +75,7 @@ def mask_outside_circle(frame, circumference_width=8):
 
 #DEBUG=True
 DEBUG=False
-def main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, is_show_imgs):
+def main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, is_show_imgs, is_save_circumferential_denoising_npy):
     global DEBUG
     # Load Data
     mag = np.load(line_of_sight_mag_filepath)
@@ -87,7 +87,7 @@ def main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, i
     print(type(mag.shape))
     print(type(label.shape))
 
-    f_ext = FeaturesExtractor(gauss_thresh=gauss_thresh, is_show_imgs=is_show_imgs)
+    f_ext = FeaturesExtractor(gauss_thresh=gauss_thresh, is_show_imgs=is_show_imgs, is_save_circumferential_denoising_npy=is_save_circumferential_denoising_npy)
     features = []
     for i in tqdm(range(mag.shape[2])):
 
@@ -107,6 +107,14 @@ def main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, i
         #    show_imgs([frame,masked_frame,high_strength_gauss], ['frame','masked','high strength gauss'], 100)
 
 
+    # 特徴量を保存
+    f_ext.save_features('features.npy')
+
+    # 円柱ノイズ除去映像npy出力
+    f_ext.save_circumferential_denoising('train_mag_circumferential_denoised.npy')
+
+    denoized = np.load('train_mag_circumferential_denoised.npy')
+    print('denoized',denoized)
 
     # 特徴量プロット
     if DEBUG:
@@ -114,18 +122,16 @@ def main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, i
     else:
         f_ext.plot(label)
 
-    # 特徴量を保存
-    f_ext.save_features('features.npy')
-
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--line-of-sight-mag-filepath', default='train_mag_0_499.npy', help='npy file path for line-of-sight magnetogram')
-    parser.add_argument('--label-solar-flare-filepath', default='train_label_0_499.npy', help='npy file path for label of solar flare')
-    parser.add_argument('--gauss-thresh', default=140, type=int, help='Threshold of Gauss')
+    parser.add_argument('--line-of-sight-mag-filepath', default='train_mag.npy', help='npy file path for line-of-sight magnetogram')
+    parser.add_argument('--label-solar-flare-filepath', default='train_label.npy', help='npy file path for label of solar flare')
+    parser.add_argument('--gauss-thresh', default=100, type=int, help='Threshold of Gauss')
     parser.add_argument('--show-imgs', action='store_true',default=False)
+    parser.add_argument('--save-circumferential-denoising-npy', action='store_true',default=True)
 
     args = parser.parse_args()
     print('args',args)
@@ -133,4 +139,5 @@ if __name__ == '__main__':
     label_solar_flare_filepath = args.label_solar_flare_filepath
     gauss_thresh = args.gauss_thresh
     is_show_imgs = args.show_imgs
-    sys.exit(main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, is_show_imgs))
+    save_circumferential_denoising_npy = args.save_circumferential_denoising_npy
+    sys.exit(main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, is_show_imgs, save_circumferential_denoising_npy))

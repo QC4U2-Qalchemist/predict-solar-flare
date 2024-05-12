@@ -3,8 +3,9 @@ import cv2
 import os
 
 # Load Data
-data_mag = np.load('train_mag_0_499.npy')
-label = np.load('train_label_0_499.npy')
+#data_mag = np.load('train_mag.npy')
+data_mag = np.load('train_mag_circumferential_denoised.npy')
+label = np.load('train_label.npy')
 
 # Check Data Shape
 print(data_mag.shape)
