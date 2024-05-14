@@ -26,52 +26,7 @@ def show_imgs(imgs, titles, wait_in_ms):
 
     key_handler(wait_in_ms)
 
-def find_min_max_coordinates(frame):
-    # 0でないピクセルの座標を取得
-    non_zero_coords = cv2.findNonZero(frame)
-    
-    if non_zero_coords is not None:
-        # X軸とY軸で座標を分割
-        x_coords = non_zero_coords[:,:,0]
-        y_coords = non_zero_coords[:,:,1]
-        
-        # X軸とY軸の最小値と最大値を求める
-        min_x = np.min(x_coords)
-        max_x = np.max(x_coords)
-        min_y = np.min(y_coords)
-        max_y = np.max(y_coords)
-        
-        return (min_x, max_x, min_y, max_y)
-    else:
-        return None
 
-def mask_outside_circle(frame, circumference_width=8):
-    # 0でないピクセルの座標の最小値と最大値を求める
-    bounds = find_min_max_coordinates(frame)
-    if bounds is None:
-        return None
-    
-    min_x, max_x, min_y, max_y = bounds
-    
-    # 円の中心座標を計算
-    center_x = (min_x + max_x) / 2
-    center_y = (min_y + max_y) / 2
-    
-    # 円の半径を計算
-    radius = max(max_x - center_x, max_y - center_y) - circumference_width
-    
-    # 出力用の画像を準備
-    masked_image = np.zeros_like(frame)
-    
-    # マスク処理
-    for y in range(frame.shape[0]):
-        for x in range(frame.shape[1]):
-            if np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2) > radius:
-                masked_image[y, x] = 0
-            else:
-                masked_image[y, x] = frame[y, x]
-    
-    return masked_image
 
 #DEBUG=True
 DEBUG=False
@@ -97,15 +52,8 @@ def main(line_of_sight_mag_filepath, label_solar_flare_filepath, out_dir, gauss_
         # i日目の画像を左右反転して表示
         frame = mag[:, ::-1, i].copy()
 
-
         # 特徴量抽出
         f_ext.append(i, frame)
-        #features.append([fext.get_subject_clarity(frame),fext.get_subject_clarity(masked_frame),fext.get_subject_clarity(high_strength_gauss)])
-
-        # 各種加工画像を描画する
-        #if is_show_imgs:
-        #    show_imgs([frame,masked_frame,high_strength_gauss], ['frame','masked','high strength gauss'], 100)
-
 
     # 特徴量を保存
     f_ext.save_features('features.npy')
