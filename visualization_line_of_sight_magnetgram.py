@@ -1,6 +1,10 @@
 import numpy as np
 import cv2
 import os
+from features_extractor import FeaturesExtractor
+
+f_ext = FeaturesExtractor(gauss_thresh=200, is_show_imgs=True, is_save_circumferential_denoising_npy=False)
+
 
 # Load Data
 #data_mag = np.load('train_mag.npy')
@@ -55,6 +59,9 @@ while i < data_mag.shape[2]:
         elif key == ord('s'):  # 'd' キーで10コマ巻き戻し
             i = max(0, i - 10)
             break
+        elif key == ord('a'):  # 'a' キーでActive regons抽出
+            f_ext.append(data_mag[:, ::-1, i].copy())
+            break
 
     if not pause:
         if key == ord('g'):  # 'g' キーで10コマ早送り
@@ -63,8 +70,10 @@ while i < data_mag.shape[2]:
             i += 1
         elif key == ord('d'):  # 'd' キーで1コマ巻き戻し
             i = max(0, i - 1)
-        elif key == ord('s'):  # 'd' キーで10コマ巻き戻し
+        elif key == ord('s'):  # 's' キーで10コマ巻き戻し
             i = max(0, i - 10)
+        elif key == ord('a'):  # 'a' キーでActive regons抽出
+            f_ext.append(data_mag[:, ::-1, i].copy())
         else:
             i += 1
 
