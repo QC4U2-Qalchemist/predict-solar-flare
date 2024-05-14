@@ -129,7 +129,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--line-of-sight-mag-filepath', default='train_mag.npy', help='npy file path for line-of-sight magnetogram')
     parser.add_argument('--label-solar-flare-filepath', default='train_label.npy', help='npy file path for label of solar flare')
-    parser.add_argument('--out-dir', default='output', help='output directory')
+    parser.add_argument('--out-dir', default='active_regions', help='output directory')
     parser.add_argument('--gauss-thresh', default=200, type=int, help='Threshold of Gauss')
     parser.add_argument('--show-imgs', action='store_true',default=False)
     parser.add_argument('--save-circumferential-denoising-npy', action='store_true',default=True)
