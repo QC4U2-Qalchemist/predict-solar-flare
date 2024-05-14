@@ -75,7 +75,7 @@ def mask_outside_circle(frame, circumference_width=8):
 
 #DEBUG=True
 DEBUG=False
-def main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, is_show_imgs, is_save_circumferential_denoising_npy):
+def main(line_of_sight_mag_filepath, label_solar_flare_filepath, out_dir, gauss_thresh, is_show_imgs, save_circumferential_denoising_npy, save_active_regions):
     global DEBUG
     # Load Data
     mag = np.load(line_of_sight_mag_filepath)
@@ -87,7 +87,7 @@ def main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, i
     print(type(mag.shape))
     print(type(label.shape))
 
-    f_ext = FeaturesExtractor(gauss_thresh=gauss_thresh, is_show_imgs=is_show_imgs, is_save_circumferential_denoising_npy=is_save_circumferential_denoising_npy)
+    f_ext = FeaturesExtractor(out_dir=out_dir, gauss_thresh=gauss_thresh, is_show_imgs=is_show_imgs, is_save_circumferential_denoising_npy=save_circumferential_denoising_npy, is_save_active_regions=save_active_regions)
     features = []
     for i in tqdm(range(mag.shape[2])):
 
@@ -99,7 +99,7 @@ def main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, i
 
 
         # 特徴量抽出
-        f_ext.append(frame)
+        f_ext.append(i, frame)
         #features.append([fext.get_subject_clarity(frame),fext.get_subject_clarity(masked_frame),fext.get_subject_clarity(high_strength_gauss)])
 
         # 各種加工画像を描画する
@@ -129,9 +129,11 @@ if __name__ == '__main__':
 
     parser.add_argument('--line-of-sight-mag-filepath', default='train_mag.npy', help='npy file path for line-of-sight magnetogram')
     parser.add_argument('--label-solar-flare-filepath', default='train_label.npy', help='npy file path for label of solar flare')
+    parser.add_argument('--out-dir', default='output', help='output directory')
     parser.add_argument('--gauss-thresh', default=200, type=int, help='Threshold of Gauss')
     parser.add_argument('--show-imgs', action='store_true',default=False)
     parser.add_argument('--save-circumferential-denoising-npy', action='store_true',default=True)
+    parser.add_argument('--save-active-regions', action='store_true',default=True)
 
     args = parser.parse_args()
     print('args',args)
@@ -139,5 +141,7 @@ if __name__ == '__main__':
     label_solar_flare_filepath = args.label_solar_flare_filepath
     gauss_thresh = args.gauss_thresh
     is_show_imgs = args.show_imgs
+    out_dir = args.out_dir
     save_circumferential_denoising_npy = args.save_circumferential_denoising_npy
-    sys.exit(main(line_of_sight_mag_filepath, label_solar_flare_filepath, gauss_thresh, is_show_imgs, save_circumferential_denoising_npy))
+    save_active_regions = args.save_active_regions
+    sys.exit(main(line_of_sight_mag_filepath, label_solar_flare_filepath, out_dir, gauss_thresh, is_show_imgs, save_circumferential_denoising_npy, save_active_regions))

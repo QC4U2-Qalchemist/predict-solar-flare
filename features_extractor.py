@@ -3,13 +3,16 @@ import cv2
 from PIL import Image, ImageStat
 from skimage import feature, filters
 import matplotlib.pyplot as plt
+import os
 
 
 class FeaturesExtractor:
-    def __init__(self, gauss_thresh=140, is_show_imgs=False, is_save_circumferential_denoising_npy=True):
+    def __init__(self, out_dir='output', gauss_thresh=140, is_show_imgs=False, is_save_circumferential_denoising_npy=True, is_save_active_regions=False):
         self.is_show_images = is_show_imgs
         self.is_save_circumferential_denoising_npy = is_save_circumferential_denoising_npy
         self.gauss_thresh = gauss_thresh
+        self.is_save_active_regions = is_save_active_regions
+        self.out_dir = out_dir
         self.frames = []
         self.features = {}
         self.features['complexities in orignal frame'] = []
@@ -22,6 +25,8 @@ class FeaturesExtractor:
         self.circumferential_denoising = []
 
         #self.complexities = []
+        self.width = 512
+        self.height = 512
 
     def save_features(self, out_filepath):
         np.save(out_filepath, self.features)
@@ -59,7 +64,34 @@ class FeaturesExtractor:
                           for im in im_list]
         return cv2.hconcat(im_list_resize)
 
-    def append(self, image):
+    def save_active_regions(self, idx, active_regions, metas):
+        output_dir = os.path.join(self.out_dir, '{:05}'.format(idx))
+        os.makedirs(output_dir, exist_ok=True)
+        for active_region, meta in zip(active_regions, metas):
+            #center_x = int(self.width - meta[0] - 1) # ¶‰E”½“]‚ð–ß‚·
+            center_x = int(meta[0]) # ¶‰E”½“]‚Å–ß‚³‚È‚¢
+            center_y = int(meta[1])
+            center_w = meta[2]
+            center_h = meta[3]
+            filebasename='active_region'           \
+                + '_idx{:05}'.format(idx)      \
+                + '_x{:05}'.format(center_x)   \
+                + '_y{:05}'.format(center_y)   \
+                + '_w{:05}'.format(center_w)   \
+                + '_h{:05}'.format(center_h)
+                
+            filepath = os.path.join(output_dir, filebasename)
+            print('saving ar',filepath)
+
+            #cv2.imwrite(filepath + '.png', active_region[:, ::-1]) # ¶‰E”½“]‚ð–ß‚·
+            #np.save(filepath + '.npy',active_region[:, ::-1])# ¶‰E”½“]‚ð–ß‚·
+            cv2.imwrite(filepath + '.png', active_region) # ¶‰E”½“]‚Å–ß‚³‚È‚¢
+            np.save(filepath + '.npy',active_region)# ¶‰E”½“]‚Å–ß‚³‚È‚¢
+            #cv2.imshow('load ar',np.load(filepath + '.npy'))
+            #cv2.waitKey(0)
+            
+
+    def append(self, idx, image):
         self.frames.append(image)
 
         # Ž¥ê‹­“x‚ªè‡’l‚ð’´‚¦‚éƒKƒEƒX‚ÌƒsƒNƒZƒ‹
@@ -75,7 +107,10 @@ class FeaturesExtractor:
         self.features['complexities in strength Gauss'].append(self.get_complexity(masked_frame))
 
         # Active regins‚Ì’Šo
-        active_regions = self.get_active_regions(image)
+        active_regions, active_regions_meta = self.get_active_regions(image)
+
+        if self.is_save_active_regions:
+            self.save_active_regions(idx, active_regions, active_regions_meta)
 
         # Active regins”
         self.features['num of active regions'].append(len(active_regions))
@@ -87,7 +122,9 @@ class FeaturesExtractor:
             ar_complexity_total += self.get_complexity(active_region)
 
         # AR•¡ŽG“x‚Ì•½‹Ï’l
-        ar_complexity = ar_complexity_total / len(active_regions)
+        ar_complexity = 0
+        if len(active_regions) > 0:
+            ar_complexity = ar_complexity_total / len(active_regions)
         self.features['AR complexity avg.'].append(ar_complexity)
         self.features['AR complexity total'].append(ar_complexity_total)
 
@@ -192,6 +229,7 @@ class FeaturesExtractor:
     def get_active_regions(self, image, rect_size=(20,20)):
 
         active_regions = []
+        active_regions_meta = []
 
         color = cv2.cvtColor(np.clip(image * 255, 0, 255).astype(np.uint8), cv2.COLOR_GRAY2BGR)
         at_rects = np.zeros(color.shape)
@@ -251,17 +289,17 @@ class FeaturesExtractor:
             #cv2.imshow('part',image[y:y+h, x:x+w])
             #cv2.waitKey(0)
             active_regions.append(image[y:y+h, x:x+w])
-
+            active_regions_meta.append((x + w/2, y + h/2, w, h))
 
         if self.is_show_images:
-            for i, active_regions in enumerate(active_regions):
-                cv2.imshow('Active Regions' + str(i), active_regions)
+            #for i, active_region in enumerate(active_regions):
+            #    cv2.imshow('Active Regions' + str(i), active_region)
 
             cv2.imshow('Active Regions', color)
             cv2.imshow('org',self.hconcat_resize_min([image, high_strength_gauss, masked_high_strength_gauss]))
             self.key_handler(1)  # You might want to adjust this depending on the context
 
-        return active_regions
+        return active_regions, active_regions_meta
 
     def save_circumferential_denoising(self, out_filepath):
         np.save(out_filepath,np.array(self.circumferential_denoising).transpose(1, 2, 0))

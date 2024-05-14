@@ -3,7 +3,7 @@ import cv2
 import os
 from features_extractor import FeaturesExtractor
 
-f_ext = FeaturesExtractor(gauss_thresh=200, is_show_imgs=True, is_save_circumferential_denoising_npy=False)
+f_ext = FeaturesExtractor(gauss_thresh=200, is_show_imgs=True, is_save_circumferential_denoising_npy=False, is_save_active_regions=False)
 
 
 # Load Data
@@ -60,7 +60,7 @@ while i < data_mag.shape[2]:
             i = max(0, i - 10)
             break
         elif key == ord('a'):  # 'a' キーでActive regons抽出
-            f_ext.append(data_mag[:, ::-1, i].copy())
+            f_ext.append(i, data_mag[:, ::-1, i].copy())
             break
 
     if not pause:
@@ -73,7 +73,7 @@ while i < data_mag.shape[2]:
         elif key == ord('s'):  # 's' キーで10コマ巻き戻し
             i = max(0, i - 10)
         elif key == ord('a'):  # 'a' キーでActive regons抽出
-            f_ext.append(data_mag[:, ::-1, i].copy())
+            f_ext.append(i, data_mag[:, ::-1, i].copy())
         else:
             i += 1
 
