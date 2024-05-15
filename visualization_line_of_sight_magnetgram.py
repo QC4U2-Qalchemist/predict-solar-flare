@@ -7,8 +7,9 @@ f_ext = FeaturesExtractor(gauss_thresh=200, is_show_imgs=True, is_save_circumfer
 
 
 # Load Data
-#data_mag = np.load('train_mag.npy')
-data_mag = np.load('train_mag_circumferential_denoised.npy')
+data_mag = np.load('train_mag.npy')
+#data_mag = np.load('train_mag_circumferential_denoised.npy')
+#data_mag = np.load('only_active_regions.npy')
 label = np.load('train_label.npy')
 
 # Check Data Shape

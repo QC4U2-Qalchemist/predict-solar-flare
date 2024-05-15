@@ -5,13 +5,9 @@ import cv2
 from tqdm import tqdm
 import re
 import os
+import csv
 
 from read_active_regions import list_npy_files_recursively, extract_values_from_filename
-
-def extract_features(active_region):
-    #cv2.imshow('active region',active_region)
-    #cv2.waitKey(0)
-    return 0,0,0
 
 class ExtractActiveRegionFeatures:
 
@@ -21,7 +17,7 @@ class ExtractActiveRegionFeatures:
 
     def get_magnetic_neural_line(self, image):
 
-        cv2.imshow('image',image)
+        #cv2.imshow('image',image)
 
         scaled_image = np.clip(image * 255, 0, 255).astype(np.uint8)
 
@@ -46,7 +42,6 @@ class ExtractActiveRegionFeatures:
         # ガウシアンブラーを適用して画像のノイズを低減
         blurred = cv2.GaussianBlur(scaled_image, (5, 5), 0)
 
-        cv2.imshow('blurred',blurred)
 
         # 高い閾値を設定して勾配の大きいエッジのみを抽出
         high_threshold = 250  # この値を調整することで勾配の大きいエッジのみ抽出
@@ -63,6 +58,7 @@ class ExtractActiveRegionFeatures:
         #print("Areas of detected contours:", contour_areas)
 
         if False:
+            cv2.imshow('blurred',blurred)
             cv2.imshow('edge', edge)
             # 表示用
             color = cv2.cvtColor(np.clip(blurred * 255, 0, 255).astype(np.uint8), cv2.COLOR_GRAY2BGR)
@@ -75,10 +71,34 @@ class ExtractActiveRegionFeatures:
 
         num_of_magnetic_neural_lines = len(contours)
         total_length_of_magnetic_neural_lines = np.sum(contour_areas)
-        complexity_of_magnetic_neural_lines = self.get_complexity(edge)
+
+        #complexity_of_magnetic_neural_lines = self.get_complexity(edge)
+        #print('complexity_of_magnetic_neural_lines0',complexity_of_magnetic_neural_lines)
+
+        complexity_of_magnetic_neural_lines = self.get_complexity_ar(edge)
+        #print('complexity_of_magnetic_neural_lines0',complexity_of_magnetic_neural_lines)
+
+
+
 
         return [num_of_magnetic_neural_lines, total_length_of_magnetic_neural_lines, complexity_of_magnetic_neural_lines]
 
+    def get_complexity_ar(self, edges):
+        #scaled_image = np.clip(image * 255, 0, 255).astype(np.uint8)
+
+        # Cannyエッジ検出を適用
+        #edges = cv2.Canny(scaled_image, 100, 200)
+
+        # エッジのピクセル数を計算
+        edges_pixels = np.sum(edges == 255)
+
+        # 全ピクセル数
+        total_pixels = edges.size
+
+        # 複雑度の計算（エッジの割合）
+        complexity = edges_pixels / total_pixels
+
+        return complexity
 
     def get_complexity(self, image):
         scaled_image = np.clip(image * 255, 0, 255).astype(np.uint8)
@@ -109,7 +129,8 @@ class ExtractActiveRegionFeatures:
 
 def main(active_regions_dir):
     ext_ar_features = ExtractActiveRegionFeatures(gauss_thresh=200)
-    features_of_active_regions = {}
+    #features_of_active_regions = {}
+    features_of_active_regions = []
     active_region_npy_files = list_npy_files_recursively(active_regions_dir)
 
     for active_region_file in active_region_npy_files:
@@ -125,13 +146,29 @@ def main(active_regions_dir):
         active_region = np.load(active_region_file)
 
         key='{:05}'.format(idx)
-        if idx not in features_of_active_regions:
-            features_of_active_regions[key]=[]
+        #if idx not in features_of_active_regions:
+        #    features_of_active_regions[key]=[]
 
-        features_of_active_regions[key].append([idx, centor_x, centor_y, width, height, width * height] + ext_ar_features.get_features(active_region))
+        #features_of_active_regions[key].append([idx, centor_x, centor_y, width, height, width * height] + ext_ar_features.get_features(active_region))
+        features_of_active_regions.append([idx, centor_x, centor_y, width, height, width * height] + ext_ar_features.get_features(active_region))
 
 
-    print(features_of_active_regions)
+    save_as_csv('active_regions_features.csv',features_of_active_regions)
+    #print(features_of_active_regions)
+
+def save_as_csv(csv_filepath, data):
+    headers = ["frame_id", "centor_x", "centor_y", "width", "height", "area", "avg", "std", "max_gauss", "min_gauss", "strong_gauss", "week_gauss", "complexity", "num_of_magnetic_neural_lines", "total_length_of_magnetic_neural_lines", "complexity_of_magnetic_neural_lines" ]
+
+    # CSVファイルに書き込み
+    with open(csv_filepath, mode='w', newline='') as file:
+        writer = csv.writer(file)
+
+        # ヘッダーの書き込み
+        writer.writerow(headers)
+
+        # データの書き込み
+        writer.writerows(data)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

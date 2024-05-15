@@ -58,11 +58,15 @@ def main(line_of_sight_mag_filepath, label_solar_flare_filepath, out_dir, gauss_
     # 特徴量を保存
     f_ext.save_features('features.npy')
 
-    # 円柱ノイズ除去映像npy出力
-    f_ext.save_circumferential_denoising('train_mag_circumferential_denoised.npy')
+    # Active regionsのみの太陽球データ保存
+    f_ext.save_only_active_regions_image('only_active_regions.npy')
 
-    denoized = np.load('train_mag_circumferential_denoised.npy')
-    print('denoized',denoized)
+    # 円柱ノイズ除去映像npy出力
+    if save_circumferential_denoising_npy:
+        f_ext.save_circumferential_denoising('train_mag_circumferential_denoised.npy')
+
+        #denoized = np.load('train_mag_circumferential_denoised.npy')
+        #print('denoized',denoized)
 
     # 特徴量プロット
     if DEBUG:
@@ -80,8 +84,8 @@ if __name__ == '__main__':
     parser.add_argument('--out-dir', default='active_regions', help='output directory')
     parser.add_argument('--gauss-thresh', default=200, type=int, help='Threshold of Gauss')
     parser.add_argument('--show-imgs', action='store_true',default=False)
-    parser.add_argument('--save-circumferential-denoising-npy', action='store_true',default=True)
-    parser.add_argument('--save-active-regions', action='store_true',default=True)
+    parser.add_argument('--save-circumferential-denoising-npy', action='store_true',default=False)
+    parser.add_argument('--save-active-regions', action='store_true',default=False)
 
     args = parser.parse_args()
     print('args',args)

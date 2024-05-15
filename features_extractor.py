@@ -4,7 +4,7 @@ from PIL import Image, ImageStat
 from skimage import feature, filters
 import matplotlib.pyplot as plt
 import os
-
+from extract_features_from_active_regions import ExtractActiveRegionFeatures
 
 class FeaturesExtractor:
     def __init__(self, out_dir='output', gauss_thresh=140, is_show_imgs=False, is_save_circumferential_denoising_npy=True, is_save_active_regions=False):
@@ -17,12 +17,14 @@ class FeaturesExtractor:
         self.features = {}
         self.features['complexities in orignal frame'] = []
         self.features['complexities in strength Gauss'] = []
-        self.features['num of active regions'] = []
-        self.features['AR complexity avg.'] = []
-        self.features['AR complexity total'] = []
+        self.features['num of ARs'] = []
+        #self.features['AR complexity avg.'] = []
+        #self.features['AR complexity total'] = []
 
         self.pause = False
         self.circumferential_denoising = []
+        self.only_active_regions_image = []
+        self.extractor_ar_features = ExtractActiveRegionFeatures(gauss_thresh=self.gauss_thresh)
 
         #self.complexities = []
         self.width = 512
@@ -107,32 +109,55 @@ class FeaturesExtractor:
         self.features['complexities in strength Gauss'].append(self.get_complexity(masked_frame))
 
         # Active reginsの抽出
-        active_regions, active_regions_meta = self.get_active_regions(image)
+        active_regions, active_regions_meta, only_active_regions_image = self.get_active_regions(image)
+
+        #cv2.imshow('only_active_regions_image',only_active_regions_image)
+        self.only_active_regions_image.append(only_active_regions_image[:, ::-1])
 
         if self.is_save_active_regions:
-            self.save_active_regions(idx, active_regions, active_regions_meta)
+            self.extractor_ar_features.save_active_regions(idx, active_regions, active_regions_meta)
+           
 
         # Active regins数
-        self.features['num of active regions'].append(len(active_regions))
+        self.features['num of ARs'].append(len(active_regions))
     
 
-        ar_complexity_total = 0
-        for active_region in active_regions:
-            # ARの複雑度
-            ar_complexity_total += self.get_complexity(active_region)
 
-        # AR複雑度の平均値
-        ar_complexity = 0
-        if len(active_regions) > 0:
-            ar_complexity = ar_complexity_total / len(active_regions)
-        self.features['AR complexity avg.'].append(ar_complexity)
-        self.features['AR complexity total'].append(ar_complexity_total)
+        #total_avg = 0
+        #total_std = 0
+        #total_max_gauss = 0
+        #total_min_gauss = 0
+        #total_strong_gauss = 0
+        #total_week_gauss = 0
+        #total_complexity = 0
+        #total_num_of_magnetic_neural_lines = 0
+        #total_length_of_magnetic_neural_lines = 0
+        #total_complexity_of_magnetic_neural_lines = 0
 
+        #for active_region, meta in zip(active_regions, active_regions_meta):
+        #    avg, \
+        #    std, \
+        #    max_gauss, \
+        #    min_gauss, \
+        #    strong_gauss, \
+        #    week_gauss, \
+        #    complexity, \
+        #    num_of_magnetic_neural_lines, \
+        #    length_of_magnetic_neural_lines, \
+        #    complexity_of_magnetic_neural_lines \
+        #    = self.extractor_ar_features.get_features(active_region)
+
+
+
+        #self.features['AR complexity avg.'].append(ar_complexity)
+        #self.features['AR complexity total'].append(ar_complexity_total)
+
+        # 円周ノイズ除去（オリジナル）
         denoised = self.get_circumferential_denoising(image)
         self.circumferential_denoising.append(denoised)
-        #cv2.imshow('denoised',denoised)
-        #cv2.imshow('image',image)
-        #cv2.waitKey(1)
+
+
+
 
     def find_min_max_coordinates(self, image):
         # 0でないピクセルの座標を取得
@@ -228,6 +253,11 @@ class FeaturesExtractor:
 
     def get_active_regions(self, image, rect_size=(20,20)):
 
+        # 画像変数 image の形状とデータタイプを出力
+        #print("Image shape:", image.shape)
+        #print("Data type:", image.dtype)
+        only_active_regions_image = np.zeros_like(image)
+
         active_regions = []
         active_regions_meta = []
 
@@ -290,6 +320,7 @@ class FeaturesExtractor:
             #cv2.waitKey(0)
             active_regions.append(image[y:y+h, x:x+w])
             active_regions_meta.append((x + w/2, y + h/2, w, h))
+            only_active_regions_image[y:y+h, x:x+w] = image[y:y+h, x:x+w]
 
         if self.is_show_images:
             #for i, active_region in enumerate(active_regions):
@@ -299,10 +330,14 @@ class FeaturesExtractor:
             cv2.imshow('org',self.hconcat_resize_min([image, high_strength_gauss, masked_high_strength_gauss]))
             self.key_handler(1)  # You might want to adjust this depending on the context
 
-        return active_regions, active_regions_meta
+        return active_regions, active_regions_meta, only_active_regions_image
 
     def save_circumferential_denoising(self, out_filepath):
         np.save(out_filepath,np.array(self.circumferential_denoising).transpose(1, 2, 0))
+        return 
+
+    def save_only_active_regions_image(self, out_filepath):
+        np.save(out_filepath,np.array(self.only_active_regions_image).transpose(1, 2, 0))
         return 
 
     def get_circumferential_denoising(self, image, rect_size=(20,20)):
