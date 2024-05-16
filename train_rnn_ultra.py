@@ -93,11 +93,13 @@ y_pred_prob = best_model.predict(X_test)
 y_pred = (y_pred_prob > 0.5).astype(int)
 tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
 best_TSS = tp / (tp + fn) - fp / (fp + tn)
+print("Best Confusion matrix",confusion_matrix(y_test, y_pred))
 print("Best TSS from saved model:", best_TSS)
 
 # 最終モデルの予測とTSSの計算
 y_pred_prob = model.predict(X_test)
 y_pred = (y_pred_prob > 0.5).astype(int)
+print("Final Confusion matrix",confusion_matrix(y_test, y_pred))
 tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
 final_TSS = tp / (tp + fn) - fp / (fp + tn)
 print("Final Accuracy:", accuracy_score(y_test, y_pred))
