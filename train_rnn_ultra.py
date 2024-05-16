@@ -8,7 +8,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 import matplotlib.pyplot as plt
 
 # 再現性のためのランダムシードの設定
-seed = 42
+seed = 985
 np.random.seed(seed)
 random.seed(seed)
 tf.random.set_seed(seed)
@@ -28,7 +28,7 @@ scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
 # データを時系列形式に変換
-sequence_length = 10
+sequence_length = 12
 def create_sequences(data, labels, sequence_length):
     sequences = []
     labels_seq = []
@@ -80,13 +80,13 @@ model = tf.keras.Sequential([
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 # モデルチェックポイントの作成
-checkpoint = tf.keras.callbacks.ModelCheckpoint('best_model.h5', monitor='val_tss', save_best_only=True, mode='max', verbose=1)
+checkpoint = tf.keras.callbacks.ModelCheckpoint('best_model_sql_len_60.keras', monitor='val_tss', save_best_only=True, mode='max', verbose=1)
 
 # モデルのトレーニング
 history = model.fit(X_train, y_train, epochs=50, batch_size=10, validation_split=0.1, callbacks=[tss_callback, checkpoint])
 
 # ベストモデルのロード
-best_model = tf.keras.models.load_model('best_model.h5', custom_objects={'tss_metric': tss_callback})
+best_model = tf.keras.models.load_model('best_model_sql_len_60.keras', custom_objects={'tss_metric': tss_callback})
 
 # ベストモデルで予測とTSSの計算
 y_pred_prob = best_model.predict(X_test)
